@@ -1,5 +1,6 @@
 package com.jokuskay.weather.activities;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -57,20 +58,6 @@ public class HomeActivity extends ActionBarActivity implements AdapterView.OnIte
 
         mText = (TextView) findViewById(R.id.weather_text);
 
-        if (System.currentTimeMillis() - mApp.getPrefLong(Constants.TIME_CITIES) > Constants.CACHE_TIME) {
-            Log.d(TAG, "Cache time invalid");
-            if (mDataFragment.mCountries == null) {
-                loadData();
-            }
-        } else {
-            Log.d(TAG, "Cache time valid");
-            setUi();
-        }
-
-        if (mDataFragment.mWeather != null) {
-            setWeather();
-        }
-
     }
 
     private void setUi() {
@@ -83,14 +70,20 @@ public class HomeActivity extends ActionBarActivity implements AdapterView.OnIte
     private void loadData() {
         Log.d(TAG, "loadData");
 
+        showProgress();
+        startService(new Intent(this, LoadCities.class));
+    }
+
+    private void showProgress() {
         mLayout.setVisibility(View.GONE);
         mProgress.setVisibility(View.VISIBLE);
-        startService(new Intent(this, LoadCities.class));
     }
 
     private void setCountries() {
         Log.d(TAG, "setCountries");
-        mDataFragment.mCountries = Country.getAll(HomeActivity.this);
+        if (mDataFragment.mCountries == null) {
+            mDataFragment.mCountries = Country.getAll(HomeActivity.this);
+        }
 
         // re-create or use clear() add()
         ArrayAdapter<Country> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, mDataFragment.mCountries);
@@ -126,6 +119,20 @@ public class HomeActivity extends ActionBarActivity implements AdapterView.OnIte
     protected void onResume() {
         super.onPostResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, new IntentFilter(getPackageName()));
+
+        if (isMyServiceRunning(LoadCities.class)) {
+            showProgress();
+        } else {
+            if (mDataFragment.mCountries == null || System.currentTimeMillis() - mApp.getPrefLong(Constants.TIME_CITIES) > Constants.CACHE_TIME) {
+                loadData();
+            } else {
+                setUi();
+
+                if (mDataFragment.mWeather != null) {
+                    setWeather();
+                }
+            }
+        }
     }
 
     @Override
@@ -191,5 +198,15 @@ public class HomeActivity extends ActionBarActivity implements AdapterView.OnIte
 
         }
     };
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

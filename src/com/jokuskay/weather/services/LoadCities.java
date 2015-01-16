@@ -115,6 +115,7 @@ public class LoadCities extends IntentService {
     }
 
     private void broadcast() {
+        Log.d(TAG, "broadcast");
         Intent intent = new Intent(getPackageName());
         intent.putExtra("action", Constants.ACTION_CITIES);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);

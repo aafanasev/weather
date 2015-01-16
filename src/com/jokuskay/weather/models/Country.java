@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.SyncStateContract;
+import android.util.Log;
 import com.jokuskay.weather.helpers.DbColumn;
 import com.jokuskay.weather.helpers.DbHelper;
 
@@ -71,6 +72,8 @@ public class Country {
     }
 
     public static List<Country> getAll(Context context) {
+        Log.d(TABLE, "getAll");
+
         List<Country> result = new ArrayList<>();
 
         DbHelper dbHelper = DbHelper.getInstance(context);
