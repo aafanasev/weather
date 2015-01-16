@@ -27,6 +27,7 @@
         </activity>
 
         <service android:name=".services.LoadCities"/>
+        <service android:name=".services.LoadWeather"/>
 
     </application>
 

@@ -6,8 +6,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.jokuskay.weather.App;
 import com.jokuskay.weather.helpers.Constants;
-import com.jokuskay.weather.models.City;
-import com.jokuskay.weather.models.Country;
+import com.jokuskay.weather.models.Weather;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -16,46 +15,41 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
 
-public class LoadCities extends IntentService {
+public class LoadWeather extends IntentService {
 
-    private static final String TAG = "LoadCities";
+    private static final String TAG = "LoadWeather";
 
     private App mApp;
+    private Weather mWeather;
 
-    private Map<String, Integer> mCountries = new HashMap<>();
-    private List<City> mCities = new ArrayList<>();
+    private int mCityId;
 
-    private int mCountryId;
-
-    public LoadCities() {
+    public LoadWeather() {
         super(TAG);
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        mApp = (App) getApplication();
-        mApp.setPref(Constants.TIME_CITIES, System.currentTimeMillis());
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "start");
 
-        loadXml();
+        mCityId = intent.getIntExtra("cityId", 0);
+        String key = Constants.TIME_WEATHER + mCityId;
 
-        if (mCountries.size() > 0) {
-            Log.d(TAG, mCountries.size() + " countries");
-            Country.removeAll(this);
-            Country.save(this, mCountries);
-        }
+        mApp = (App) getApplication();
+        mWeather = Weather.getByCityId(this, mCityId);
 
-        if (mCities.size() > 0) {
-            Log.d(TAG, mCities.size() + " cities");
-            City.removeAll(this);
-            City.save(this, mCities);
+        if (mWeather == null || System.currentTimeMillis() - mApp.getPrefLong(key) > Constants.CACHE_TIME) {
+            mApp.setPref(key, System.currentTimeMillis());
+
+            Weather.remove(this, mCityId);
+
+            mWeather = new Weather();
+            mWeather.setId(mCityId);
+
+            loadXml();
+
+            mWeather.save(this);
         }
 
         broadcast();
@@ -64,13 +58,13 @@ public class LoadCities extends IntentService {
     private void loadXml() {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(Constants.URL_CITIES);
+            URL url = new URL(Constants.URL_WEATHER.replace("{id}", mCityId + ""));
             connection = (HttpURLConnection) url.openConnection();
             connection.setUseCaches(true);
             connection.setRequestProperty("If-None-Match", mApp.getPrefString(Constants.ETAG_CITIES));
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                mApp.setPref(Constants.ETAG_CITIES, connection.getHeaderField("ETag"));
+                mApp.setPref(Constants.ETAG_WEATHER + mCityId, connection.getHeaderField("ETag"));
                 parseXml(connection.getInputStream());
             }
 
@@ -93,30 +87,28 @@ public class LoadCities extends IntentService {
         int eventType;
         do {
             eventType = parser.next();
-            if (eventType == XmlPullParser.START_TAG && "city".equals(parser.getName())) {
-
-                int cityId = Integer.parseInt(parser.getAttributeValue(null, "id"));
-                String countryName = parser.getAttributeValue(null, "country");
-
-                int countryId;
-                if (mCountries.containsKey(countryName)) {
-                    countryId = mCountries.get(countryName);
-                } else {
-                    countryId = ++mCountryId;
-                    mCountries.put(countryName, countryId);
-                }
-
-                eventType = parser.next();
-                if (eventType == XmlPullParser.TEXT) {
-                    mCities.add(new City(cityId, countryId, parser.getText()));
+            if (eventType == XmlPullParser.START_TAG) {
+                String tagName = parser.getName();
+                if ("temperature".equals(tagName)) {
+                    eventType = parser.next();
+                    if (eventType == XmlPullParser.TEXT) {
+                        mWeather.setTemperature(Integer.parseInt(parser.getText()));
+                    }
+                } else if ("weather_type".equals(tagName)) {
+                    eventType = parser.next();
+                    if (eventType == XmlPullParser.TEXT) {
+                        mWeather.setText(parser.getText());
+                    }
                 }
             }
-        } while (eventType != XmlPullParser.END_DOCUMENT);
+
+        } while (eventType != XmlPullParser.END_TAG || !"fact".equals(parser.getName()));
     }
 
     private void broadcast() {
         Intent intent = new Intent(getPackageName());
-        intent.putExtra("action", Constants.ACTION_CITIES);
+        intent.putExtra("action", Constants.ACTION_WEATHER);
+        intent.putExtra("weather", mWeather);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 

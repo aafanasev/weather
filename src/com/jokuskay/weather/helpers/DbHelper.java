@@ -6,12 +6,13 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import com.jokuskay.weather.models.City;
 import com.jokuskay.weather.models.Country;
+import com.jokuskay.weather.models.Weather;
 
 public class DbHelper extends SQLiteOpenHelper {
 
     private static final String TAG = "DbHelper";
 
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
     private static final String DB_NAME = "weather.db";
 
     private static DbHelper instance;
@@ -38,6 +39,8 @@ public class DbHelper extends SQLiteOpenHelper {
         sql = getTableCreateSql(City.TABLE, City.Column.values());
         db.execSQL(sql);
 
+        sql = getTableCreateSql(Weather.TABLE, Weather.Column.values());
+        db.execSQL(sql);
     }
 
     @Override
@@ -46,6 +49,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         db.execSQL("DROP TABLE IF EXISTS " + Country.TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + City.TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + Weather.TABLE);
 
         onCreate(db);
     }

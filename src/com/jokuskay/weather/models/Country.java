@@ -59,6 +59,11 @@ public class Country {
         mName = name;
     }
 
+    @Override
+    public String toString() {
+        return getName();
+    }
+
     public static void removeAll(Context context) {
         DbHelper dbHelper = DbHelper.getInstance(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();

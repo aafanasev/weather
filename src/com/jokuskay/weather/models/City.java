@@ -37,7 +37,8 @@ public class City {
 
     }
 
-    public City(int countryId, String name) {
+    public City(int id, int countryId, String name) {
+        mId = id;
         mCountryId = countryId;
         mName = name;
     }
@@ -64,6 +65,11 @@ public class City {
 
     public void setName(String name) {
         mName = name;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 
     public static void removeAll(Context context) {
@@ -106,6 +112,7 @@ public class City {
 
         for (City city : cities) {
             ContentValues values = new ContentValues();
+            values.put(Column._id.name(), city.getId());
             values.put(Column.country_id.name(), city.getCountryId());
             values.put(Column.name.name(), city.getName());
             db.insert(TABLE, null, values);
