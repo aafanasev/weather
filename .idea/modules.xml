@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://C:/Program Files/android-sdk-windows/extras/android/support/v7/appcompat/appcompat.iml" filepath="C:/Program Files/android-sdk-windows/extras/android/support/v7/appcompat/appcompat.iml" />
       <module fileurl="file://$PROJECT_DIR$/weather.iml" filepath="$PROJECT_DIR$/weather.iml" />
     </modules>
   </component>

@@ -1,15 +1,15 @@
-package com.jokuskay.weather;
+package com.jokuskay.weather.activities;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import com.jokuskay.weather.R;
 
-public class HomeActivity extends Activity {
-    /**
-     * Called when the activity is first created.
-     */
+public class HomeActivity extends ActionBarActivity {
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
     }
+
 }
