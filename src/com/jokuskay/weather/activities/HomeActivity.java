@@ -123,7 +123,7 @@ public class HomeActivity extends ActionBarActivity implements AdapterView.OnIte
         if (isMyServiceRunning(LoadCities.class)) {
             showProgress();
         } else {
-            if (mDataFragment.mCountries == null || System.currentTimeMillis() - mApp.getPrefLong(Constants.TIME_CITIES) > Constants.CACHE_TIME) {
+            if (System.currentTimeMillis() - mApp.getPrefLong(Constants.TIME_CITIES) > Constants.CACHE_TIME) {
                 loadData();
             } else {
                 setUi();
